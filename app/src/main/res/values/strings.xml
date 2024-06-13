@@ -1,3 +1,32 @@
 <resources>
-    <string name="app_name">Assessment 3</string>
+    <string name="app_name">Go-Travel</string>
+    <string name="list_kosong">Belum ada jadwal kamu nih :(</string>
+    <string name="x_diklik">%1$s diklik!</string>
+    <string name="tambah_keberangkatan">Tambah jadwal</string>
+    <string name="ubah_keberangkatan">Edit jadwal</string>
+    <string name="kembali">Kembali</string>
+    <string name="tentang_aplikasi">Tentang aplikasi</string>
+    <string name="copyright">Aplikasi yang menampilkan jadwal travel dan bukti keberangkatan.\n\nAplikasi ini dibuat untuk Assessment 3.
+        \n\nCopyright 2024 Riffqi Dava Sundara.\nAll rights reserved.</string>
+    <string name="nama">Nama penumpang</string>
+    <string name="keberangkatan">Keberangkatan</string>
+    <string name="tujuan">Tujuan</string>
+    <string name="jam">Jam</string>
+    <string name="simpan">Simpan</string>
+    <string name="invalid">Isian tidak boleh kosong!</string>
+    <string name="hapus">Hapus</string>
+    <string name="bagikan">Bagikan</string>
+    <string name="bagikan_template">Nama: %1$s\nKeberangkatan: %2$s\nTujuan: %3$s\nJam berangkat: %4$s</string>
+    <string name="pesan_hapus">Hapus pesanan?</string>
+    <string name="tombol_hapus">Hapus</string>
+    <string name="tombol_batal">Batal</string>
+    <string name="list">List</string>
+    <string name="grid">Grid</string>
+    <string name="tambah_jadwal">Tambah jadwal</string>
+    <string name="bukti_keberangkatan">Bukti keberangkatan</string>
+    <string name="gambar">Gambar</string>
+    <string name="error">Gagal. Tidak ada koneksi.</string>
+    <string name="try_again">Coba lagi</string>
+    <string name="tutup">Tutup</string>
+    <string name="logout">Logout</string>
 </resources>
