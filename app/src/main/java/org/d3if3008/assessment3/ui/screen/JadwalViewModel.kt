@@ -12,6 +12,10 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.d3if3008.assessment3.model.Bukti
+import org.d3if3008.assessment3.model.BuktiCreate
+import org.d3if3008.assessment3.model.ImageData
+import org.d3if3008.assessment3.network.ApiStatus
+import org.d3if3008.assessment3.network.ImageApi
 import org.d3if3008.assessment3.network.TravelApi
 import java.io.ByteArrayOutputStream
 
@@ -20,41 +24,81 @@ class JadwalViewModel : ViewModel() {
     var data = mutableStateOf(emptyList<Bukti>())
         private set
 
-    var status = MutableStateFlow(TravelApi.ApiStatus.LOADING)
+    var status = MutableStateFlow(ApiStatus.LOADING)
         private set
 
     var errorMessage = mutableStateOf<String?>(null)
         private set
 
+    var querySuccess = mutableStateOf(false)
+        private set
+
+
     fun retrieveData(userId: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            status.value = TravelApi.ApiStatus.LOADING
+            status.value = ApiStatus.LOADING
             try {
-                data.value = TravelApi.service.getTravel(userId)
-                status.value = TravelApi.ApiStatus.SUCCESS
+                data.value = TravelApi.service.getAllPesanan(userId)
+                status.value = ApiStatus.SUCCESS
             } catch (e: Exception) {
                 Log.d("MainViewModel", "Failure: ${e.message}")
-                status.value = TravelApi.ApiStatus.FAILED
+                status.value = ApiStatus.FAILED
             }
         }
     }
 
-    fun saveData(userId: String, nama: String, keberangkatan: String, bitmap: Bitmap) {
+    fun saveData(email: String, nama_pemesan: String, destinasi: String, bitmap: Bitmap) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val result = TravelApi.service.postTravel(
-                    userId,
-                    nama.toRequestBody("text/plain".toMediaTypeOrNull()),
-                    keberangkatan.toRequestBody("text/plain".toMediaTypeOrNull()),
-                    bitmap.toMultipartBody()
+                val upload = ImageApi.imgService.uploadImg(
+                    image = bitmap.toMultipartBody()
                 )
-                if (result.status == "success")
-                    retrieveData(userId)
-                else
-                    throw Exception(result.message)
+
+                if (upload.success) {
+
+                    TravelApi.service.addPesanan(
+                        BuktiCreate(
+                            email,
+                            transformImageData(upload.data),
+                            nama_pemesan,
+                            destinasi,
+                            upload.data.deletehash!!
+                        )
+                    )
+                    status.value = ApiStatus.LOADING
+                    retrieveData(email)
+                    querySuccess.value = true
+                }
             } catch (e: Exception) {
-                Log.d("MainViewModel", "Failure: ${e.message}")
-                errorMessage.value = "Error: ${e.message}"
+                Log.d("MainVM", "${e.message}")
+                if (e.message == "HTTP 500 ") {
+                    errorMessage.value = "Error: Database Idle, harap masukkan data kembali."
+                } else {
+                    errorMessage.value = "Error: ${e.message}"
+                    Log.d("MainViewModel", "Failure: ${e.message}")
+                }
+            }
+        }
+    }
+
+    fun deleteData(email: String, buktiId: Int, deleteHash: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val upload = ImageApi.imgService.deleteImg(
+                    deleteHash = deleteHash
+                )
+                if (upload.success) {
+                    TravelApi.service.deletePesanan(buktiId, email)
+                    querySuccess.value = true
+                    retrieveData(email)
+                }
+            } catch (e: Exception) {
+                if (e.message == "HTTP 500 ") {
+                    errorMessage.value = "Error: Database Idle, harap eksekusi data kembali."
+                } else {
+                    errorMessage.value = "Error: ${e.message}"
+                    Log.d("MainViewModel", "Failure: ${e.message}")
+                }
             }
         }
     }
@@ -66,12 +110,22 @@ class JadwalViewModel : ViewModel() {
         val requestBody = byteArray.toRequestBody(
             "image/jpg".toMediaTypeOrNull(), 0, byteArray.size
         )
-        return MultipartBody.Part.createFormData(
-            "image", "image.jpg", requestBody
-        )
+        return MultipartBody.Part.createFormData("image", "image.jpg", requestBody)
+    }
+
+    fun transformImageData(imageData: ImageData): String {
+        val extension = when (imageData.type) {
+            "image/png" -> "png"
+            "image/jpeg" -> "jpg"
+            "image/gif" -> "gif"
+            else -> throw IllegalArgumentException("Unsupported image type")
+        }
+        return "${imageData.id}.$extension"
     }
 
     fun clearMessage() {
         errorMessage.value = null
+        querySuccess.value = false
     }
+
 }
